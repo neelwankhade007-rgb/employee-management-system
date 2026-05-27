@@ -18,6 +18,14 @@ The application is split into three independent Spring Boot microservices:
    - The main frontend and API gateway.
    - Communicates with both the Employee and Attendance services to dynamically calculate total salary and generate a payslip.
 
+## 💻 Tech Stack
+
+- **Backend**: Java 21, Spring Boot 3.5, Spring Web
+- **Frontend**: HTML5, Vanilla JavaScript, CSS3
+- **Build Tool**: Maven
+- **Design System**: Custom CSS Glassmorphism
+- **Data Storage**: In-Memory (Java Collections)
+
 ## 🛠️ How to Run
 
 1. Open a terminal in each of the three service directories (`employee-service`, `attendance-service`, and `payslip-service`).
