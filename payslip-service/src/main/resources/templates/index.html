@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payslip Generator</title>
+    <!-- Fixed typo: previously it was style.css but file is styles.css -->
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-links">
+        <a href="/" class="nav-link active">Payslip</a>
+        <a href="/employee" class="nav-link">Employees</a>
+        <a href="/attendance" class="nav-link">Attendance</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="payslip-card">
+        <div class="card-header">
+            <h2>Payslip Generator</h2>
+        </div>
+
+        <div class="form-group">
+            <label for="empId">Employee ID</label>
+            <input type="number"
+                   id="empId"
+                   class="form-control"
+                   placeholder="Enter Employee ID" 
+                   autocomplete="off">
+        </div>
+
+        <button class="btn" onclick="getPayslip()">
+            Generate Payslip
+        </button>
+
+        <div id="result"></div>
+    </div>
+</div>
+
+<script>
+    async function getPayslip() {
+        let id = document.getElementById("empId").value;
+        if (!id) return;
+        
+        const btn = document.querySelector('.btn');
+        const originalText = btn.innerText;
+        btn.innerText = 'Generating...';
+        btn.disabled = true;
+
+        const resultDiv = document.getElementById("result");
+        // Reset state for new fetch
+        resultDiv.classList.remove('visible');
+
+        try {
+            let response = await fetch(`http://localhost:8083/payslip/${id}`);
+            
+            if (!response.ok) {
+                throw new Error('Payslip not found');
+            }
+            
+            let data = await response.json();
+            
+            // Wait for collapse animation to finish before updating content
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <div class="result-content">
+                        <h3>Payslip Details</h3>
+                        <div class="result-row">
+                            <span class="result-label">Name</span>
+                            <span class="result-value">${data.employeeName || 'N/A'}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Days Present</span>
+                            <span class="result-value">${data.daysPresent || '0'}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Total Salary</span>
+                            <span class="result-value">₹${data.totalSalary || '0'}</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Trigger reveal animation
+                requestAnimationFrame(() => {
+                    resultDiv.classList.add('visible');
+                });
+            }, 300);
+            
+        } catch (error) {
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <div class="result-content" style="text-align: center; color: #ef4444;">
+                        Failed to fetch payslip for ID ${id}.
+                    </div>
+                `;
+                resultDiv.classList.add('visible');
+            }, 300);
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>

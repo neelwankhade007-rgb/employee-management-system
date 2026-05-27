@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-links">
+        <a href="/" class="nav-link">Payslip</a>
+        <a href="/employee" class="nav-link active">Employees</a>
+        <a href="/attendance" class="nav-link">Attendance</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="payslip-card">
+        <div class="card-header">
+            <h2>Add Employee</h2>
+        </div>
+
+        <div class="form-group">
+            <label for="empId">Employee ID</label>
+            <input type="number" id="empId" class="form-control" placeholder="Enter Employee ID" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <label for="empName">Name</label>
+            <input type="text" id="empName" class="form-control" placeholder="Enter Name" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <label for="empSalary">Salary Per Day</label>
+            <input type="number" id="empSalary" class="form-control" placeholder="Enter Salary" autocomplete="off">
+        </div>
+
+        <button class="btn" onclick="saveEmployee()" style="margin-bottom: 10px;">
+            Save Employee
+        </button>
+
+        <button class="btn" onclick="showAllEmployees()" style="background-color: #4f46e5;">
+            Show All Employees
+        </button>
+
+        <div id="result"></div>
+    </div>
+</div>
+
+<script>
+    async function saveEmployee() {
+        let id = document.getElementById("empId").value;
+        let name = document.getElementById("empName").value;
+        let salary = document.getElementById("empSalary").value;
+        
+        if (!id || !name || !salary) return;
+        
+        const btn = document.querySelector('.btn');
+        const originalText = btn.innerText;
+        btn.innerText = 'Saving...';
+        btn.disabled = true;
+
+        const resultDiv = document.getElementById("result");
+        resultDiv.classList.remove('visible');
+
+        try {
+            // Note: Employee entity has field "Name" with capital N
+            let response = await fetch(`http://localhost:8081/employees`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, name: name, salaryPerDay: salary })
+            });
+            
+            if (!response.ok) throw new Error('Failed to save');
+            
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <div class="result-content" style="text-align: center; color: #10b981;">
+                        Employee saved successfully!
+                    </div>
+                `;
+                resultDiv.classList.add('visible');
+            }, 300);
+            
+        } catch (error) {
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <div class="result-content" style="text-align: center; color: #ef4444;">
+                        Failed to save employee. Is the service running?
+                    </div>
+                `;
+                resultDiv.classList.add('visible');
+            }, 300);
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function showAllEmployees() {
+        const resultDiv = document.getElementById("result");
+        resultDiv.classList.remove('visible');
+
+        try {
+            let response = await fetch(`http://localhost:8081/employees`);
+            if (!response.ok) throw new Error('Failed to fetch');
+            
+            let data = await response.json();
+            
+            let html = '<div class="result-content"><h3>All Employees</h3>';
+            if (data.length === 0) {
+                html += '<div style="text-align: center; margin-top: 10px;">No employees found</div>';
+            } else {
+                data.forEach(emp => {
+                    html += `
+                        <div class="result-row" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 8px;">
+                            <span class="result-label">ID: ${emp.id}</span>
+                            <span class="result-value">${emp.name || emp.Name || 'N/A'} (₹${emp.salaryPerDay}/day)</span>
+                        </div>
+                    `;
+                });
+            }
+            html += '</div>';
+
+            setTimeout(() => {
+                resultDiv.innerHTML = html;
+                resultDiv.classList.add('visible');
+            }, 300);
+            
+        } catch (error) {
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <div class="result-content" style="text-align: center; color: #ef4444;">
+                        Failed to fetch employees.
+                    </div>
+                `;
+                resultDiv.classList.add('visible');
+            }, 300);
+        }
+    }
+</script>
+
+</body>
+</html>

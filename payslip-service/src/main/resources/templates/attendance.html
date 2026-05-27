@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Tracking</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-links">
+        <a href="/" class="nav-link">Payslip</a>
+        <a href="/employee" class="nav-link">Employees</a>
+        <a href="/attendance" class="nav-link active">Attendance</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="payslip-card">
+        <div class="card-header">
+            <h2>Add Attendance</h2>
+        </div>
+
+        <div class="form-group">
+            <label for="empId">Employee ID</label>
+            <input type="number" id="empId" class="form-control" placeholder="Enter Employee ID" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <label for="daysPresent">Days Present</label>
+            <input type="number" id="daysPresent" class="form-control" placeholder="Enter Days Present" autocomplete="off">
+        </div>
+
+        <button class="btn" onclick="saveAttendance()" style="margin-bottom: 10px;">
+            Save Attendance
+        </button>
+
+        <button class="btn" onclick="showAllAttendance()" style="background-color: #4f46e5;">
+            Show All Attendance
+        </button>
+
+        <div id="result"></div>
+    </div>
+</div>
+
+<script>
+    async function saveAttendance() {
+        let id = document.getElementById("empId").value;
+        let days = document.getElementById("daysPresent").value;
+        
+        if (!id || !days) return;
+        
+        const btn = document.querySelector('.btn');
+        const originalText = btn.innerText;
+        btn.innerText = 'Saving...';
+        btn.disabled = true;
+
+        const resultDiv = document.getElementById("result");
+        resultDiv.classList.remove('visible');
+
+        try {
+            let response = await fetch(`http://localhost:8082/attendance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ employeeId: id, daysPresent: days })
+            });
+            
+            if (!response.ok) throw new Error('Failed to save');
+            
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <div class="result-content" style="text-align: center; color: #10b981;">
+                        Attendance saved successfully!
+                    </div>
+                `;
+                resultDiv.classList.add('visible');
+            }, 300);
+            
+        } catch (error) {
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <div class="result-content" style="text-align: center; color: #ef4444;">
+                        Failed to save attendance. Is the service running?
+                    </div>
+                `;
+                resultDiv.classList.add('visible');
+            }, 300);
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function showAllAttendance() {
+        const resultDiv = document.getElementById("result");
+        resultDiv.classList.remove('visible');
+
+        try {
+            let response = await fetch(`http://localhost:8082/attendance`);
+            if (!response.ok) throw new Error('Failed to fetch');
+            
+            let data = await response.json();
+            
+            let html = '<div class="result-content"><h3>All Attendance</h3>';
+            if (data.length === 0) {
+                html += '<div style="text-align: center; margin-top: 10px;">No attendance found</div>';
+            } else {
+                data.forEach(att => {
+                    html += `
+                        <div class="result-row" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 8px;">
+                            <span class="result-label">ID: ${att.employeeId}</span>
+                            <span class="result-value">${att.daysPresent} Days Present</span>
+                        </div>
+                    `;
+                });
+            }
+            html += '</div>';
+
+            setTimeout(() => {
+                resultDiv.innerHTML = html;
+                resultDiv.classList.add('visible');
+            }, 300);
+            
+        } catch (error) {
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <div class="result-content" style="text-align: center; color: #ef4444;">
+                        Failed to fetch attendance.
+                    </div>
+                `;
+                resultDiv.classList.add('visible');
+            }, 300);
+        }
+    }
+</script>
+
+</body>
+</html>
